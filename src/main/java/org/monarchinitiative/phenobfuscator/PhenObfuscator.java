@@ -4,13 +4,10 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.protobuf.util.JsonFormat;
-import org.json.simple.parser.ParseException;
 import org.monarchinitiative.phenobfuscator.io.PhenopacketImporter;
 import org.monarchinitiative.phenol.base.PhenolRuntimeException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.TermId;
-import org.phenopackets.schema.v1.Diagnosis;
 import org.phenopackets.schema.v1.Phenopacket;
 import org.phenopackets.schema.v1.core.*;
 import org.slf4j.Logger;
@@ -48,11 +45,11 @@ public class PhenObfuscator {
 
     private final OntologyClass HOMOZYGOUS = OntologyClass.newBuilder().setId("GENO:0000136").setLabel("homozygous").build();
     private final OntologyClass HETEROZYGOUS = OntologyClass.newBuilder().setId("GENO:0000135").setLabel("heterozygous").build();
+    private final String OUTPUT_DIRECTORY = "obfuscated";
 
 
 
     public static void main(String []args){
-        System.out.print("PhenObfuscator");
         PhenObfuscator obfuscator = new PhenObfuscator();
         JCommander jc = JCommander.newBuilder().addObject(obfuscator).build();
         try {
@@ -71,18 +68,18 @@ public class PhenObfuscator {
     }
 
 
-    public void ingestHpo() {
+    private void ingestHpo() {
         this.ontology = OntologyLoader.loadOntology(new File(this.hpoPath));
     }
 
     /**
      * Extract a signle heterozygous variant.
      * Assumption. There is either one homozygous variants or multiple het/hom variants
-     * @param variants
-     * @return
+     * @param variants A list of one or more variant of arbitrary genotype
+     * @return A single heterozygous Variant
      */
     private Variant extractHeterozygousVariant(List<Variant> variants) {
-        Variant obfuvar = null;
+        Variant obfuvar;
         Variant currentVar;
         if (variants.size()==1) {
             currentVar = variants.get(0);
@@ -114,7 +111,6 @@ public class PhenObfuscator {
         Disease simulatedDiagnosis = importer.getDiagnosis();
         List<PhenotypicFeature> hpoIdList = importer.getPhenotypicFeatureList();
         List<Variant> variants = importer.getVariantList();
-        String genomeAssembly = importer.getGenomeAssembly();
         Gene gene = importer.getGene();
         // if we are doing biallelic, then we keep one mutant allele
         // this might be the case if there is a single homozygous variant,
@@ -123,7 +119,6 @@ public class PhenObfuscator {
         // if biallelic==false, get rid of all variants.
 
         if (biallelic) {
-            VcfAllele vcfAll;
             if (variants.size()==1) {
                 Variant var = variants.get(0);
                 if (!var.getZygosity().equals(HOMOZYGOUS)) {
@@ -131,39 +126,35 @@ public class PhenObfuscator {
                 }
             }
             Variant hetvar = extractHeterozygousVariant(variants);
-            Phenopacket obfuPacket = Phenopacket.newBuilder().
+            return Phenopacket.newBuilder().
                     setSubject(subject).
                     addDiseases(simulatedDiagnosis).
                     addAllPhenotypicFeatures(hpoIdList).
                     addGenes(gene).
                     addVariants(hetvar).
                     build();
-            return obfuPacket;
         } else {
-            Phenopacket obfuPacket = Phenopacket.newBuilder().
+            return Phenopacket.newBuilder().
                     setSubject(subject).
                     addDiseases(simulatedDiagnosis).
                     addAllPhenotypicFeatures(hpoIdList).
                     addGenes(gene).
                     build();
-            return obfuPacket;
         }
     }
 
-    public static String toJson(Phenopacket phenoPacket) throws IOException {
+    private static String toJson(Phenopacket phenoPacket) throws IOException {
         return JsonFormat.printer().print(phenoPacket);
     }
 
-    public void obfuscate() {
-        String dirname = "obfuscated";
-        new File(dirname).mkdir();
-
+    private void obfuscate() {
+        new File(OUTPUT_DIRECTORY).mkdir();
         for (File file: this.phenopacketFiles) {
             String phenopacketAbsolutePath = file.getAbsolutePath();
             Phenopacket obfuscated = getObfuscatedPhenopacket(phenopacketAbsolutePath);
             if (obfuscated == null) continue;
             String basename = file.getName();
-            String path2 = String.format("%s%s%s",dirname,File.separator,basename);
+            String path2 = String.format("%s%s%s",OUTPUT_DIRECTORY,File.separator,basename);
             try {
                 BufferedWriter bw = new BufferedWriter(new FileWriter(path2));
                 bw.write(toJson(obfuscated));
@@ -172,13 +163,12 @@ public class PhenObfuscator {
                 e.printStackTrace();
             }
         }
-
     }
 
 
 
 
-    public void getListOfPhenopacketFiles() {
+    private void getListOfPhenopacketFiles() {
         phenopacketFiles = new ArrayList<>();
         final File folder = new File(phenopacketDirectoryPath);
         if (! folder.isDirectory()) {
@@ -191,9 +181,7 @@ public class PhenObfuscator {
                 System.out.println(++counter + ") "+ fileEntry.getName());
                 this.phenopacketFiles.add(fileEntry);
             }
-
         }
-
     }
 
 }
