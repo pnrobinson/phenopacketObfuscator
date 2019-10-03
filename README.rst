@@ -1,5 +1,5 @@
 ####################################
-Phenofuscator: phenopacketObfuscator
+Phenobfuscator: phenopacketObfuscator
 ####################################
 
 
@@ -48,7 +48,7 @@ This mode ingests and outputs all phenopackets. There are a number of parameters
 behavior of the obfuscation.
 
 
-.. list-table::  ``download`` command
+ .. list-table::  ``download`` command
     :widths: 35 50
     :header-rows: 1
 
