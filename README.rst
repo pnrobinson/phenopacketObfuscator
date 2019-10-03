@@ -48,22 +48,19 @@ This mode ingests and outputs all phenopackets. There are a number of parameters
 behavior of the obfuscation.
 
 
-.. list-table::  Options
-   :widths: 35 50
-   :header-rows: 1
-
-   * - option
-     - Explanation
-   * - ``--imprecision``
-     - replace HPO terms by a parent term
-   * - ``--double_imprecision``
-     - replace HPO terms by a grandparent term
-   * - ``--n_noise``
-     - number of noise (random) terms to add
-   * - ``--match_noise``
-     - add a number of noise terms equal to the number of original terms
-   * ``--n_alleles``
-     - number of alleles to remove from phenopacket (0, 1 or 2)
++----------------------+--------------------------------------------------------+
+| Option               | Explanation                                            |
++======================+========================================================+
+| --imprecision        | replace HPO terms by a parent term                     |
++----------------------+--------------------------------------------------------+
+| --double_imprecision | replace HPO terms by a grandparent term                |
++----------------------+--------------------------------------------------------+
+| --n_noise            | number of noise (random) terms to add                  |
++----------------------+--------------------------------------------------------+
+| --match_noise        | add equal number of noise terms as original number     |
++----------------------+--------------------------------------------------------+
+| --n_alleles          | number of alleles to remove  (0, 1 or 2)               |
++----------------------+--------------------------------------------------------+
 
 
 These options can be combined, but it is not possible to use both
