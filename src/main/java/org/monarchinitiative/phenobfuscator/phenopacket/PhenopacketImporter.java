@@ -1,4 +1,4 @@
-package org.monarchinitiative.phenobfuscator.io;
+package org.monarchinitiative.phenobfuscator.phenopacket;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.util.JsonFormat;
