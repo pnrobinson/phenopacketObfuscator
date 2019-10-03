@@ -55,8 +55,8 @@ public class Main {
 
     private List<File> phenopacketFiles;
 
-
-    private final String OUTPUT_DIRECTORY = "obfuscated";
+    @Parameter(names = {"--out"}, description = "name of output directory")
+    private String OUTPUT_DIRECTORY = "obfuscated";
 
 
     public static void main(String []args){

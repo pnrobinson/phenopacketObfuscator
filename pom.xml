@@ -8,7 +8,7 @@
     <version>0.2.1</version>
     <packaging>jar</packaging>
 
-    <name>pheno-obfuscator</name>
+    <name>phenobfuscator</name>
     <url>https://github.com/TheJacksonLaboratory/LIRICAL/</url>
 
     <prerequisites>
@@ -259,7 +259,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>pheno-obfuscator</finalName>
+        <finalName>phenobfuscator</finalName>
         <sourceDirectory>src/main/java</sourceDirectory>
         <resources>
             <resource>
@@ -323,7 +323,7 @@
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
                             <useUniqueVersions>false</useUniqueVersions>
-                            <mainClass>org.monarchinitiative.lirical.Lirical</mainClass>
+                            <mainClass>org.monarchinitiative.phenobfuscator.Main</mainClass>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
@@ -422,7 +422,7 @@
                             <transformers>
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.monarchinitiative.lirical.Lirical</mainClass>
+                                    <mainClass>org.monarchinitiative.phenobfuscator.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

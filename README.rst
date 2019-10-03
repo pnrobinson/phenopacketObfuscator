@@ -9,62 +9,29 @@ disease. The app takes as input the path of a directory that contains one
 or multiple phenopacket case reports. It alters the genotypes of the phenopackets and
 writes the altered phenopackets to a new directory (*obfuscated*).
 
-For instance, imagine we have two phenopackets with the following genotypes . ::
 
-    "genes": [{
-        "id": "ENTREZ:2200",
-        "symbol": "FBN1"
-    }],
-    "variants": [{
-        "vcfAllele": {
-            "genomeAssembly": "GRCh37",
-            "chr": "15",
-            "pos": 48808561,
-            "ref": "T",
-            "alt": "A"
-        },
-    "zygosity": {
-      "id": "GENO:0000135",
-      "label": "heterozygous"
-        }
-    }],
+There are two modes to run this app in. Both modes start with a collection of phenopackets
+in some directory. All phenopackets are read, and obfuscated phenopackets are output to
+a new directory.
 
-and .::
+Biallelic
+~~~~~~~~~
 
+For lack of a better name. This mode filter out phenopackets from cases that are autosomal recessive
+diseases (the assumption is that these cases have two pathogenic allelics). All other phenopackets
+are skipped. The only difference is that phenopackets with one homozygous variant now have one heterozygous variant.
+Phenopackets with compound het variants are output with one of the two variants (at random).
 
-    "genes": [{
-        "id": "ENTREZ:583",
-        "symbol": "BBS2"
-        }],
-    "variants": [{
-        "vcfAllele": {
-            "genomeAssembly": "GRCh37",
-            "chr": "16",
-            "pos": 56530925,
-            "ref": "G",
-            "alt": "A"
-        },
-    "zygosity": {
-      "id": "GENO:0000135",
-      "label": "heterozygous"
-        }
-    }, {
-        "vcfAllele": {
-            "genomeAssembly": "GRCh37",
-            "chr": "16",
-            "pos": 56519631,
-            "ref": "A",
-            "alt": "T"
-        },
-    "zygosity": {
-      "id": "GENO:0000135",
-      "label": "heterozygous"
-        }
-    }]
+To run this mode, enter ::
+
+    java -jar phenobfuscator.jar -p /home/user/wherever/ppacket \\
+        --hpo /home/user/wherever/data/hp.obo \\
+        --biallelic
+
+Adjust the paths according to your system! ``/home/user/wherever/ppacket`` is a directory that contains
+at least one phenopacket (assumption: version 1.0.0RC3 or better).
 
 
-  
-By default, the app will remove the variants entirely.
 
 If the `--biallelic` flag is used, then the app will only output
 phenopackets that originally had two pathogenic alleles (i.e., autosomal recessive disease).
@@ -73,3 +40,40 @@ heterozygous variant. If the original phenopacket had two compound heterozygous
 variants, it will choose one of them at random. If the original phenopacket
 had one homozygous variant, it will output the same allele as
 a heterozygous  variant.
+
+Parameterized
+~~~~~~~~~~~~~
+
+This mode ingests and outputs all phenopackets. There are a number of parameters that determine the
+behavior of the obfuscation.
+
+
+.. list-table::  ``download`` command
+    :widths: 35 50
+    :header-rows: 1
+
+    * - option
+      - Explanation
+    * - ``--imprecision``
+      - replace HPO terms by a parent term
+    * - ``--double_imprecision``
+      - replace HPO terms by a grandparent term
+    * - ``--n_noise``
+      - number of noise (random) terms to add
+    * - ``--match_noise``
+      - add a number of noise terms equal to the number of original terms
+    * ``--n_alleles``
+      - number of alleles to remove from phenopacket (0, 1 or 2)
+
+
+These options can be combined, but it is not possible to use both
+``--impression`` and ``--double_imprecision`` options at the same time, and it is not possible to
+use both ``--match_noise`` and ``--n_noise options`` at the same time.
+
+
+
+Other options
+~~~~~~~~~~~~~
+
+The ``--out`` option controls the name of the output directory (default = "obfuscated").
+The **required** ``--hpo`` option indicates the path to the Human Phenotype Ontology obo file.

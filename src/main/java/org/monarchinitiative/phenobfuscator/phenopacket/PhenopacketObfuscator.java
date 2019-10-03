@@ -95,13 +95,13 @@ public class PhenopacketObfuscator {
             variants = ImmutableList.of();
         } else if (n_alleles == 1) {
             Variant v = extractHeterozygousVariant(this.variants);
-            this.variants.clear();
+            this.variants = new ArrayList<>();
             this.variants.add(v);
         }
         return Phenopacket.newBuilder().
                 setSubject(subject).
                 addDiseases(simulatedDiagnosis).
-                addAllPhenotypicFeatures(hpoIdList).
+                addAllPhenotypicFeatures(newHpoIdList).
                 addGenes(gene).
                 addAllVariants(this.variants).
                 build();
