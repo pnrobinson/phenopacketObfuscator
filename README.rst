@@ -10,7 +10,7 @@ or multiple phenopacket case reports. It alters the genotypes of the phenopacket
 writes the altered phenopackets to a new directory (*obfuscated*).
 
 
-There are two modes to run this app in. Both modes start with a collection of phenopackets
+There are three modes to run this app in. All modes start with a collection of phenopackets
 in some directory. All phenopackets are read, and obfuscated phenopackets are output to
 a new directory.
 
@@ -40,6 +40,18 @@ heterozygous variant. If the original phenopacket had two compound heterozygous
 variants, it will choose one of them at random. If the original phenopacket
 had one homozygous variant, it will output the same allele as
 a heterozygous  variant.
+
+Replace
+~~~~~~~
+
+This mode replaces all HPO terms in the phenopacket with random HPO terms. Negation is maintained (i.e.,
+any NOT term is replaced by a random NOT term). Nothing else is changed. To run this mode, enter ::
+
+
+    java -jar phenobfuscator.jar -p /home/user/wherever/ppacket \\
+        --hpo /home/user/wherever/data/hp.obo \\
+        --replace
+
 
 Parameterized
 ~~~~~~~~~~~~~

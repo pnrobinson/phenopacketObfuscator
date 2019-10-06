@@ -49,6 +49,8 @@ public class Main {
     @Parameter(names = {"--match_noise"}, description = "add an equal number of noise terms")
     private
     boolean matchNoise = false;
+    @Parameter(names = {"--replace"}, description = "replace all terms with noise terms")
+    private boolean replaceTerms = false;
 
     private Ontology ontology=null;
 
@@ -110,11 +112,13 @@ public class Main {
 
     private void obfuscate() {
         new java.io.File(OUTPUT_DIRECTORY).mkdir();
-        /*
-
-        */
+        if (biallelic && replaceTerms) {
+            throw new RuntimeException("[ERROR] Cannot use both --replace and --biallelic options at the same time");
+        }
         if (biallelic) {
             obfuscateBiallelic();
+        } else if (replaceTerms) {
+            obfuscateByReplacement();
         } else {
             obfuscateParams();
         }
@@ -151,6 +155,39 @@ public class Main {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    /**
+     * Transform e.g., Arora-2019-COG8-proband.json to Arora-2019-COG8-proband_terms_replaced_obfuscated.json
+     * @param bname original basename
+     * @return obfuscated basename
+     */
+    private String getReplacementObfuscatedBasename(String bname) {
+        String[] A = bname.split(".");
+        if (A.length != 2) {
+            throw new RuntimeException("Unexpected phenopacket basename: " + bname);
+        }
+        return String.format("%s_terms_replaced_obfuscated.%s", A[0],A[1]);
+    }
+
+    /**
+     * Replace all of the original HPO terms by random terms but leave everything else unchanged.
+     */
+    private void obfuscateByReplacement() {
+        for (java.io.File file: this.phenopacketFiles) {
+            String phenopacketAbsolutePath = file.getAbsolutePath();
+            PhenopacketObfuscator pobfuscator = new PhenopacketObfuscator(phenopacketAbsolutePath, this.ontology);
+            Phenopacket obfuscated = pobfuscator.getObfuscationByReplacement();
+            String basename = getReplacementObfuscatedBasename(file.getName());
+            String path2 = String.format("%s%s%s", OUTPUT_DIRECTORY, File.separator, basename);
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(path2));
+                bw.write(toJson(obfuscated));
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

@@ -107,13 +107,16 @@ public class PhenopacketObfuscator {
                 build();
     }
 
+
     /**
-     * This is a term that was observed in the simulated patient (note that it should not be a HpoTermId, which
-     * contains metadata about the term in a disease entity, such as overall frequency. Instead, we are simulating an
-     * individual patient and this is a definite observation.
+     *  This is a term that was observed in the simulated patient (note that it should not be a HpoTermId, which
+     *  contains metadata about the term in a disease entity, such as overall frequency. Instead, we are simulating an
+     *  individual patient and this is a definite observation.
+     * @param n_noise number of noise terms
+     * @param negated if true, negate the noise term, i.e., "NOT"
      * @return a random term from the phenotype subontology.
      */
-      private  List<PhenotypicFeature> getNoiseTerms(int n_noise) {
+      private  List<PhenotypicFeature> getNoiseTerms(int n_noise, boolean negated) {
         Set<TermId> descendents=getDescendents(ontology,PHENOTYPIC_ABNORMALITY);
         ImmutableList.Builder<TermId> builder = new ImmutableList.Builder<>();
         for (TermId t: descendents) {
@@ -129,11 +132,27 @@ public class PhenopacketObfuscator {
             OntologyClass oc = OntologyClass.newBuilder().
                     setId(tid.getValue()).
                     setLabel(this.ontology.getTermMap().get(tid).getName()).build();
-            PhenotypicFeature pf = PhenotypicFeature.newBuilder()
-                    .setType(oc).build();
-            pfl.add(pf);
+            if (negated) {
+                PhenotypicFeature pf = PhenotypicFeature.newBuilder()
+                        .setType(oc).setNegated(true).build();
+                pfl.add(pf);
+            } else {
+                PhenotypicFeature pf = PhenotypicFeature.newBuilder()
+                        .setType(oc).build();
+                pfl.add(pf);
+            }
         }
         return pfl;
+    }
+
+    /**
+     * This is a term that was observed in the simulated patient (note that it should not be a HpoTermId, which
+     * contains metadata about the term in a disease entity, such as overall frequency. Instead, we are simulating an
+     * individual patient and this is a definite observation.
+     * @return a random "observed" term from the phenotype subontology.
+     */
+    private  List<PhenotypicFeature> getNoiseTerms(int n_noise) {
+        return getNoiseTerms(n_noise, false);
     }
 
 
@@ -266,6 +285,7 @@ public class PhenopacketObfuscator {
                 build();
     }
 
+
     private Phenopacket getObfuscatedPhenopacket(String path) {
 
         // if we are doing biallelic, then we keep one mutant allele
@@ -280,8 +300,36 @@ public class PhenopacketObfuscator {
                     addDiseases(simulatedDiagnosis).
                     addAllPhenotypicFeatures(hpoIdList).
                     addGenes(gene).
+                    addAllVariants(variants).
                     build();
 
     }
 
+    /**
+     * Exchange all "original" HPO terms with random HPO terms.
+     * @return a phenopacket in which all HPO terms have beeen replaced by random terms
+     */
+    public Phenopacket getObfuscationByReplacement() {
+        int n_observed = 0;
+        int n_negated = 0;
+        for (PhenotypicFeature pf : this.hpoIdList) {
+            if (pf.getNegated()) {
+                n_negated++;
+            } else {
+                n_observed ++;
+            }
+        }
+        List<PhenotypicFeature> pfl = new ArrayList<>();
+        List<PhenotypicFeature> randomObserved = getNoiseTerms(n_observed);
+        List<PhenotypicFeature> randomNegated = getNoiseTerms(n_negated, true);
+        pfl.addAll(randomObserved);
+        pfl.addAll(randomNegated);
+        return Phenopacket.newBuilder().
+                setSubject(subject).
+                addDiseases(simulatedDiagnosis).
+                addAllPhenotypicFeatures(pfl).
+                addGenes(gene).
+                build();
+
+    }
 }
