@@ -51,6 +51,8 @@ public class Main {
     boolean matchNoise = false;
     @Parameter(names = {"--replace"}, description = "replace all terms with noise terms")
     private boolean replaceTerms = false;
+    @Parameter(names = {"--np_not"}, description = "remove all negated query terms")
+    private boolean noNot = false;
 
     private Ontology ontology=null;
 
@@ -119,11 +121,43 @@ public class Main {
             obfuscateBiallelic();
         } else if (replaceTerms) {
             obfuscateByReplacement();
+        } else if (noNot) {
+            obfuscateByRemovingNotQueryTerms();
         } else {
             obfuscateParams();
         }
     }
 
+
+    private void obfuscateByRemovingNotQueryTerms() {
+        for (java.io.File file: this.phenopacketFiles) {
+            String phenopacketAbsolutePath = file.getAbsolutePath();
+            PhenopacketObfuscator pobfuscator = new PhenopacketObfuscator(phenopacketAbsolutePath, this.ontology);
+            Phenopacket obfuscated = pobfuscator.getObfuscationWithNotTermsRemoved();
+            String basename = getNoNotObfuscatedBasename(file.getName());
+            String path2 = String.format("%s%s%s", OUTPUT_DIRECTORY, File.separator, basename);
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(path2));
+                bw.write(toJson(obfuscated));
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Transform e.g., Arora-2019-COG8-proband.json to Arora-2019-COG8-proband_biallelic_obfuscated.json
+     * @param bname original basename
+     * @return obfuscated basename
+     */
+    private String getNoNotObfuscatedBasename(String bname) {
+        String[] A = bname.split(".");
+        if (A.length != 2) {
+            throw new RuntimeException("Unexpected phenopacket basename: " + bname);
+        }
+        return String.format("%s_nots_removed.%s", A[0],A[1]);
+    }
 
     /**
      * Transform e.g., Arora-2019-COG8-proband.json to Arora-2019-COG8-proband_biallelic_obfuscated.json

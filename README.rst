@@ -10,7 +10,7 @@ or multiple phenopacket case reports. It alters the genotypes of the phenopacket
 writes the altered phenopackets to a new directory (*obfuscated*).
 
 
-There are three modes to run this app in. All modes start with a collection of phenopackets
+There are several modes to run this app in. All modes start with a collection of phenopackets
 in some directory. All phenopackets are read, and obfuscated phenopackets are output to
 a new directory.
 
@@ -51,6 +51,23 @@ any NOT term is replaced by a random NOT term). Nothing else is changed. To run 
     java -jar phenobfuscator.jar -p /home/user/wherever/ppacket \\
         --hpo /home/user/wherever/data/hp.obo \\
         --replace
+
+
+Not
+~~~
+
+This mode is intended to be used to test the effect of negated (excluded) disease annotations. Some diseases in the
+HPOA have negative annotations, meaning that they are not characterized by a certain HPO feature. Often there are other
+similar diseases that have the feature. LIRICAL exploits these to weight the differential diagnosis if the queries
+explicitly negate the term in question. This obfuscation removes the negated query terms but otherwise does not
+change anything.  To run this mode, enter ::
+
+
+
+    java -jar phenobfuscator.jar -p /home/user/wherever/ppacket \\
+        --hpo /home/user/wherever/data/hp.obo \\
+        --no_not
+
 
 
 Parameterized

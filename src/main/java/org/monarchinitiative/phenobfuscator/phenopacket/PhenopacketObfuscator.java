@@ -145,6 +145,24 @@ public class PhenopacketObfuscator {
         return pfl;
     }
 
+    public Phenopacket getObfuscationWithNotTermsRemoved() {
+        List<PhenotypicFeature> newHpoIdList = new ArrayList<>();
+        for (PhenotypicFeature pf : this.hpoIdList) {
+            if (pf.getNegated()) {
+                continue; // remove NOT terms
+            } else {
+                newHpoIdList.add(pf);
+            }
+        }
+        return Phenopacket.newBuilder().
+                setSubject(subject).
+                addDiseases(simulatedDiagnosis).
+                addAllPhenotypicFeatures(newHpoIdList).
+                addGenes(gene).
+                addAllVariants(this.variants).
+                build();
+    }
+
     /**
      * This is a term that was observed in the simulated patient (note that it should not be a HpoTermId, which
      * contains metadata about the term in a disease entity, such as overall frequency. Instead, we are simulating an
