@@ -51,7 +51,7 @@ public class Main {
     boolean matchNoise = false;
     @Parameter(names = {"--replace"}, description = "replace all terms with noise terms")
     private boolean replaceTerms = false;
-    @Parameter(names = {"--np_not"}, description = "remove all negated query terms")
+    @Parameter(names = {"--no_not"}, description = "remove all negated query terms")
     private boolean noNot = false;
 
     private Ontology ontology=null;
@@ -152,10 +152,7 @@ public class Main {
      * @return obfuscated basename
      */
     private String getNoNotObfuscatedBasename(String bname) {
-        String[] A = bname.split(".");
-        if (A.length != 2) {
-            throw new RuntimeException("Unexpected phenopacket basename: " + bname);
-        }
+        String[] A = getFileNameComponents(bname);
         return String.format("%s_nots_removed.%s", A[0],A[1]);
     }
 
@@ -165,16 +162,18 @@ public class Main {
      * @return obfuscated basename
      */
     private String getBiallelicObfuscatedBasename(String bname) {
-        String[] A = bname.split(".");
-        if (A.length != 2) {
-            throw new RuntimeException("Unexpected phenopacket basename: " + bname);
-        }
+        String[] A = getFileNameComponents(bname);
         return String.format("%s_biallelic_obfuscated.%s", A[0],A[1]);
     }
 
 
 
     private void obfuscateBiallelic() {
+        String dir = "BIALLELIC_NON_OBFUSCATED";
+        File directory = new File(dir);
+        if (! directory.exists()) {
+            directory.mkdir();
+        }
         for (java.io.File file: this.phenopacketFiles) {
             String phenopacketAbsolutePath = file.getAbsolutePath();
             PhenopacketObfuscator pobfuscator = new PhenopacketObfuscator(phenopacketAbsolutePath, this.ontology);
@@ -189,8 +188,37 @@ public class Main {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                // Now copy oringal file to the NON_OBFUSCATED directory so we can compare
+                String pathOrigFileCopy = String.format("%s%s%s", directory.getAbsolutePath(),File.separator,file.getName() );
+                try {
+                    java.nio.file.Files.copy(new File(phenopacketAbsolutePath).toPath(),
+                            new File(pathOrigFileCopy).toPath(),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                            java.nio.file.StandardCopyOption.COPY_ATTRIBUTES,
+                            java.nio.file.LinkOption.NOFOLLOW_LINKS);
+                } catch(IOException e) {
+                    e.printStackTrace();
+                    System.err.println("Could not copy files to " + directory.getAbsolutePath());
+                    System.exit(1);
+                }
             }
         }
+    }
+
+    /**
+     * Divide the file name up into the first part and then the suffix
+     * @return 2-dimensional array with file name components.
+     */
+    private String [] getFileNameComponents(String bname){
+        int i = bname.lastIndexOf('.');
+        if (i < 0 ) {
+            String e = String.format("Malformed phenopacket basename (no \".\"): %s",bname );
+            throw new RuntimeException(e);
+        }
+        String[] A = new String[2];
+        A[0] = bname.substring(0,i);
+        A[1] = bname.substring(i+1);
+        return A;
     }
 
     /**
@@ -199,10 +227,7 @@ public class Main {
      * @return obfuscated basename
      */
     private String getReplacementObfuscatedBasename(String bname) {
-        String[] A = bname.split(".");
-        if (A.length != 2) {
-            throw new RuntimeException("Unexpected phenopacket basename: " + bname);
-        }
+        String[] A = getFileNameComponents(bname);
         return String.format("%s_terms_replaced_obfuscated.%s", A[0],A[1]);
     }
 
