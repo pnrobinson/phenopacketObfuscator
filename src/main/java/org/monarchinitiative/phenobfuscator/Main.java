@@ -17,6 +17,9 @@ import java.io.File;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +56,8 @@ public class Main {
     private boolean replaceTerms = false;
     @Parameter(names = {"--no_not"}, description = "remove all negated query terms")
     private boolean noNot = false;
+    @Parameter(names ={"--output_all_obfuscations"}, description = "Output all forms of obfuscation")
+    private boolean outputAllObfuscations = false;
 
     private Ontology ontology=null;
 
@@ -110,10 +115,64 @@ public class Main {
         return JsonFormat.printer().print(phenoPacket);
     }
 
+    private String createOutputDirectory(String path) {
+        Path p = Paths.get(path);
+        if (Files.exists(p)) {
+            new File(path).delete();
+        }
+        if (! new File(path).mkdir() ) {
+            throw new RuntimeException("Could not create directory at " + path);
+        }
+        return path;
+    }
+
 
 
     private void obfuscate() {
         new java.io.File(OUTPUT_DIRECTORY).mkdir();
+        if (outputAllObfuscations) {
+            OUTPUT_DIRECTORY = createOutputDirectory("BIALLELIC");
+            obfuscateBiallelic();
+            OUTPUT_DIRECTORY = createOutputDirectory("REPLACED");
+            obfuscateByReplacement();
+            OUTPUT_DIRECTORY = createOutputDirectory("NO_NOT");
+            obfuscateByRemovingNotQueryTerms();
+            OUTPUT_DIRECTORY = createOutputDirectory("NOISE_2");
+            n_alleles = 0;
+            imprecision = false;
+            double_imprecision = false;
+            matchNoise = false;
+            noise = 2;
+            obfuscateParams();
+            OUTPUT_DIRECTORY = createOutputDirectory("NOISE_2_IMPRECISION");
+            imprecision = true;
+            double_imprecision = false;
+            matchNoise = false;
+            noise = 2;
+            obfuscateParams();
+            OUTPUT_DIRECTORY = createOutputDirectory("NOISE_2_DOUBLEIMPRECISION");
+            imprecision = false;
+            double_imprecision = true;
+            matchNoise = false;
+            noise = 2;
+            obfuscateParams();
+            OUTPUT_DIRECTORY = createOutputDirectory("REMOVE_2_ALLELES");
+            n_alleles = 2;
+            imprecision = false;
+            double_imprecision = false;
+            matchNoise = false;
+            noise = 0;
+            obfuscateParams();
+            OUTPUT_DIRECTORY = createOutputDirectory("REMOVE_1_ALLELE_NOISE_2_IMPRECISION");
+            n_alleles = 1;
+            imprecision = true;
+            double_imprecision = false;
+            matchNoise = false;
+            noise = 2;
+            obfuscateParams();
+        }
+
+
         if (biallelic && replaceTerms) {
             throw new RuntimeException("[ERROR] Cannot use both --replace and --biallelic options at the same time");
         }

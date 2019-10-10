@@ -82,7 +82,8 @@ public class PhenopacketObfuscator {
         } else if (double_imprecision) {
             newHpoIdList = doubleImpreciseHpos();
         } else {
-            newHpoIdList = this.hpoIdList;
+            newHpoIdList = new ArrayList<>();
+            newHpoIdList.addAll(this.hpoIdList);
         }
         if (matchNoise) {
             n_noise = newHpoIdList.size();
