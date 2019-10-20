@@ -133,7 +133,7 @@ public class Main {
         if (outputAllObfuscations) {
             OUTPUT_DIRECTORY = createOutputDirectory("BIALLELIC");
             obfuscateBiallelic();
-            OUTPUT_DIRECTORY = createOutputDirectory("REPLACED");
+            OUTPUT_DIRECTORY = createOutputDirectory("ALLTERMS_RANDOMIZED");
             obfuscateByReplacement();
             OUTPUT_DIRECTORY = createOutputDirectory("NO_NOT");
             obfuscateByRemovingNotQueryTerms();
