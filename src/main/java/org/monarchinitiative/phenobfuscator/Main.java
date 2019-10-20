@@ -21,7 +21,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -64,6 +66,8 @@ public class Main {
 
     private List<File> phenopacketFiles;
 
+    private Set<String> notCases;
+
     @Parameter(names = {"--out"}, description = "name of output directory")
     private String OUTPUT_DIRECTORY = "obfuscated";
 
@@ -82,10 +86,30 @@ public class Main {
             jc.usage();
             System.exit(1);
         }
+        obfuscator.initNotCases();
         obfuscator.checkInputData();
         obfuscator.getListOfPhenopacketFiles();
         obfuscator.ingestHpo();
         obfuscator.obfuscate();
+    }
+
+    /**
+     * Add the file names of the ten cases that contain NOT annotations that are critical for the
+     * differential diagnosis.
+     */
+    private void initNotCases() {
+        this.notCases = new HashSet<>();
+        this.notCases.add("Ritelli-2014-TGFB2-proposita.json");
+        this.notCases.add("Smith-2000-MITF-family_815.json");
+        this.notCases.add("Yao-2019-FGFR3-VI-5.json");
+        this.notCases.add("Fiscaletti-2018-SP7-II_5.json");
+        this.notCases.add("Shervin_Badv-2019-ASAH1-patient.json");
+        this.notCases.add("Miao-2018-CLCN1-man.json");
+        this.notCases.add("Dias-2013-TRPS1-girl.json");
+        this.notCases.add("Yoshida-1991-GLB1-KT.json");
+        this.notCases.add("Han-2015-CHRDL1-III-1.json");
+        this.notCases.add("Khan-2017-HOXC13-IV-1.json");
+        System.out.printf("[INFO] Added %d cases for NOT-differential diagnosis test.\n", this.notCases.size());
     }
 
 
@@ -129,7 +153,7 @@ public class Main {
 
 
     private void obfuscate() {
-        new java.io.File(OUTPUT_DIRECTORY).mkdir();
+
         if (outputAllObfuscations) {
             OUTPUT_DIRECTORY = createOutputDirectory("BIALLELIC");
             obfuscateBiallelic();
@@ -179,30 +203,48 @@ public class Main {
         if (biallelic) {
             obfuscateBiallelic();
         } else if (replaceTerms) {
+            OUTPUT_DIRECTORY = createOutputDirectory("ALLTERMS_RANDOMIZED");
             obfuscateByReplacement();
         } else if (noNot) {
             obfuscateByRemovingNotQueryTerms();
         } else {
+            OUTPUT_DIRECTORY = createOutputDirectory(OUTPUT_DIRECTORY);
             obfuscateParams();
         }
     }
 
 
     private void obfuscateByRemovingNotQueryTerms() {
+        OUTPUT_DIRECTORY = createOutputDirectory("NO_NOT");
+        String NON_OBFUSCATED_OUTPUT_DIRECTORY = "NO_NOT_NOT_OBFUSCATED";
+        NON_OBFUSCATED_OUTPUT_DIRECTORY = createOutputDirectory(NON_OBFUSCATED_OUTPUT_DIRECTORY);
+        int counter = 0;
         for (java.io.File file: this.phenopacketFiles) {
             String phenopacketAbsolutePath = file.getAbsolutePath();
+            if (! this.notCases.contains(file.getName())) {
+                continue;
+            }
             PhenopacketObfuscator pobfuscator = new PhenopacketObfuscator(phenopacketAbsolutePath, this.ontology);
             Phenopacket obfuscated = pobfuscator.getObfuscationWithNotTermsRemoved();
             String basename = getNoNotObfuscatedBasename(file.getName());
             String path2 = String.format("%s%s%s", OUTPUT_DIRECTORY, File.separator, basename);
+            counter ++;
             try {
                 BufferedWriter bw = new BufferedWriter(new FileWriter(path2));
                 bw.write(toJson(obfuscated));
                 bw.close();
+                // Now copy oringal file to the NON_OBFUSCATED directory so we can compare
+                String pathOrigFileCopy = String.format("%s%s%s", NON_OBFUSCATED_OUTPUT_DIRECTORY,File.separator,file.getName() );
+                java.nio.file.Files.copy(new File(phenopacketAbsolutePath).toPath(),
+                        new File(pathOrigFileCopy).toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                        java.nio.file.StandardCopyOption.COPY_ATTRIBUTES,
+                        java.nio.file.LinkOption.NOFOLLOW_LINKS);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        System.out.printf("[INFO] Output %d not-not obfuscated files.\n",counter);
     }
 
     /**
