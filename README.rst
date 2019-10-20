@@ -114,12 +114,12 @@ Running PhenopacketObfuscator as follows will output a series of directories. ::
 The following categories can be used to assess the influence of various kinds of noise
 
 * ALLTERMS_RANDOMIZED.
-All HPO terms (positive and negative) are replaced by random terms
+- All HPO terms (positive and negative) are replaced by random terms
 * NOISE_2
-This uses the constructor ``PhenopacketObfuscator(phenopacketAbsolutePath, this.ontology, n_alleles, imprecision, double_imprecision, noise, matchNoise);``
+- This uses the constructor ``PhenopacketObfuscator(phenopacketAbsolutePath, this.ontology, n_alleles, imprecision, double_imprecision, noise, matchNoise);``
 with
-  -- n_alleles = 0; (do not obfuscate pathogenic alleles)
-  -- imprecision = false; (do not replace terms by parents)
-  -- double_imprecision = false; (do not replace terms by grandparents)
-  -- matchNoise = false; (do not add an equal number of noise terms)
-  -- noise = 2; (add two noise terms -- i.e., random HPO terms)
+- n_alleles = 0; (do not obfuscate pathogenic alleles)
+- imprecision = false; (do not replace terms by parents)
+- double_imprecision = false; (do not replace terms by grandparents)
+- matchNoise = false; (do not add an equal number of noise terms)
+- noise = 2; (add two noise terms -- i.e., random HPO terms)
