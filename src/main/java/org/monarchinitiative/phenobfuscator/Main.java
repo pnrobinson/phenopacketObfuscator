@@ -163,8 +163,8 @@ public class Main {
             matchNoise = false;
             noise = 0;
             obfuscateParams();
-            OUTPUT_DIRECTORY = createOutputDirectory("REMOVE_1_ALLELE_NOISE_2_IMPRECISION");
-            n_alleles = 1;
+            OUTPUT_DIRECTORY = createOutputDirectory("REMOVE_2_ALLELE_NOISE_2_IMPRECISION");
+            n_alleles = 2;
             imprecision = true;
             double_imprecision = false;
             matchNoise = false;
@@ -345,10 +345,12 @@ public class Main {
         for (final File fileEntry : folder.listFiles()) {
             if (fileEntry.isFile() && fileEntry.getAbsolutePath().endsWith(".json")) {
                 logger.info("\tPhenopacket: \"{}\"", fileEntry.getAbsolutePath());
-                System.out.println(++counter + ") "+ fileEntry.getName());
+                //System.out.println(++counter + ") "+ fileEntry.getName());
                 this.phenopacketFiles.add(fileEntry);
+                counter++;
             }
         }
+        System.out.printf("[INFO] Added %d phenopackets.\n",counter);
     }
 
 }

@@ -109,17 +109,40 @@ Output directories
 ~~~~~~~~~~~~~~~~~~
 Running PhenopacketObfuscator as follows will output a series of directories. ::
 
-    java -jar phenobfuscator.jar --output_all_obfuscations
+    java -jar phenobfuscator.jar --output_all_obfuscations -p <path to directory with original phenopackets> --hpo hp.obo
 
 The following categories can be used to assess the influence of various kinds of noise
 
 * ALLTERMS_RANDOMIZED.
- - All HPO terms (positive and negative) are replaced by random terms
+
+  - All HPO terms (positive and negative) are replaced by random terms
+
 * NOISE_2
- - This uses the constructor ``PhenopacketObfuscator(phenopacketAbsolutePath, this.ontology, n_alleles, imprecision, double_imprecision, noise, matchNoise);``
-with
- - n_alleles = 0; (do not obfuscate pathogenic alleles)
- - imprecision = false; (do not replace terms by parents)
- - double_imprecision = false; (do not replace terms by grandparents)
- - matchNoise = false; (do not add an equal number of noise terms)
- - noise = 2; (add two noise terms -- i.e., random HPO terms)
+
+  - add two noise terms -- i.e., random HPO terms
+
+* NOISE_2_IMPRECISION
+  - same as NOISE_2 but with imprecision (i.e., replace all terms with a parent term and then add two noise terms)
+
+* NOISE_2_DOUBLEIMPRECISION
+
+  - same as NOISE_2 but with double imprecision (i.e., replace all terms with a grandparent term and then add two noise terms)
+
+* REMOVE_2_ALLELES
+
+  - Remove all pathogenic alleles (i.e., remove one allele for dominant and two for recessive). Otherwise do not change the data
+
+* REMOVE_2_ALLELE_NOISE_2_IMPRECISION
+
+  - Remove one pathogenic allele, replace all terms with a parent term and then add two noise terms
+
+Additional Comparisons
+~~~~~~~~~~~~~~~~~~~~~~
+
+* BIALLELIC and BIALLELIC_NOT_OBFUSCATED
+
+  - Just look at autosomal recessive diseases. Remove one of the two alleles (BIALLELIC) or just use the original phenopackets (BIALLELIC_NOT_OBFUSCATED)
+
+* NO_NOT
+
+  - This is a special set of 10 differential diagnoses where having a NOT query makes a difference.
