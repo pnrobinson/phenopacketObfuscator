@@ -348,6 +348,7 @@ public class PhenopacketObfuscator {
                 addDiseases(simulatedDiagnosis).
                 addAllPhenotypicFeatures(pfl).
                 addGenes(gene).
+                addAllVariants(this.variants).
                 build();
 
     }
