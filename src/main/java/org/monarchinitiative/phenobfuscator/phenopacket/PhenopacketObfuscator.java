@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm.getDescendents;
 
@@ -82,8 +83,7 @@ public class PhenopacketObfuscator {
         } else if (double_imprecision) {
             newHpoIdList = doubleImpreciseHpos();
         } else {
-            newHpoIdList = new ArrayList<>();
-            newHpoIdList.addAll(this.hpoIdList);
+            newHpoIdList = new ArrayList<>(this.hpoIdList);
         }
         if (matchNoise) {
             n_noise = newHpoIdList.size();
@@ -147,14 +147,9 @@ public class PhenopacketObfuscator {
     }
 
     public Phenopacket getObfuscationWithNotTermsRemoved() {
-        List<PhenotypicFeature> newHpoIdList = new ArrayList<>();
-        for (PhenotypicFeature pf : this.hpoIdList) {
-            if (pf.getNegated()) {
-                continue; // remove NOT terms
-            } else {
-                newHpoIdList.add(pf);
-            }
-        }
+        List<PhenotypicFeature> newHpoIdList =
+                this.hpoIdList.stream().filter( pf -> ! pf.getNegated()).collect(Collectors.toList());
+
         return Phenopacket.newBuilder().
                 setSubject(subject).
                 addDiseases(simulatedDiagnosis).

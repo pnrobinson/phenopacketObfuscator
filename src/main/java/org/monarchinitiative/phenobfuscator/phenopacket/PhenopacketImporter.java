@@ -1,5 +1,6 @@
 package org.monarchinitiative.phenobfuscator.phenopacket;
 
+
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.util.JsonFormat;
 import org.json.simple.JSONObject;
@@ -133,7 +134,8 @@ public class PhenopacketImporter {
 
     public String getVcfPath() {
         return this.vcfFile!=null ?
-                this.vcfFile.getFile().getPath() :
+                this.vcfFile.getUri()
+                 :
                 null;
     }
 
