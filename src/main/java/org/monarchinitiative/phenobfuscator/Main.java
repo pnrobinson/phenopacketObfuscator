@@ -5,6 +5,8 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.google.protobuf.util.JsonFormat;
 import org.monarchinitiative.phenobfuscator.phenopacket.PhenopacketObfuscator;
+import org.monarchinitiative.phenobfuscator.variant.ClinvarParser;
+import org.monarchinitiative.phenobfuscator.variant.Variant;
 import org.monarchinitiative.phenol.base.PhenolRuntimeException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
@@ -22,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -58,6 +61,16 @@ public class Main {
     private boolean noNot = false;
     @Parameter(names ={"--output_all_obfuscations"}, description = "Output all forms of obfuscation")
     private boolean outputAllObfuscations = false;
+    @Parameter(names = {"--sort-by-moi"}, description = "sort into autosomal and recessive mode of inheritance")
+    private boolean sortByMoi = false;
+    @Parameter(names = {"--clinvar"}, description = "path to clinvar VCF file")
+    String clinVarPath = null;
+
+
+    private final static String MOI_RECESSIVE_CLINVAR = "MOI_RECESSIVE_CLINVAR";
+    private final static String MOI_RECESSIVE_NO_CLINVAR = "MOI_RECESSIVE_NO_CLINVAR";
+    private final static String MOI_DOMINANT_CLINVAR = "MOI_DOMINANT_CLINVAR";
+    private final static String MOI_DOMINANT_NO_CLINVAR = "MOI_DOMINANT_NO_CLINVAR";
 
     private Ontology ontology=null;
 
@@ -121,7 +134,7 @@ public class Main {
             new File(path).delete();
         }
         if (! new File(path).mkdir() ) {
-            throw new RuntimeException("Could not create directory at " + path);
+            throw new PhenolRuntimeException("Could not create directory at " + path);
         }
         return path;
     }
@@ -130,6 +143,18 @@ public class Main {
 
     private void obfuscate() {
         new java.io.File(OUTPUT_DIRECTORY).mkdir();
+        if (sortByMoi) {
+            if (this.clinVarPath == null) {
+                throw new PhenolRuntimeException("Need to pass path to ClinVar VCF file for MOI option");
+            }
+            ClinvarParser parser = new ClinvarParser(this.clinVarPath);
+            OUTPUT_DIRECTORY = createOutputDirectory(MOI_RECESSIVE_CLINVAR);
+            OUTPUT_DIRECTORY = createOutputDirectory(MOI_RECESSIVE_NO_CLINVAR);
+            OUTPUT_DIRECTORY = createOutputDirectory(MOI_DOMINANT_CLINVAR);
+            OUTPUT_DIRECTORY = createOutputDirectory(MOI_DOMINANT_NO_CLINVAR);
+            outputByMoi();
+            return;
+        }
         if (outputAllObfuscations) {
             OUTPUT_DIRECTORY = createOutputDirectory("BIALLELIC");
             obfuscateBiallelic();
@@ -184,6 +209,55 @@ public class Main {
             obfuscateByRemovingNotQueryTerms();
         } else {
             obfuscateParams();
+        }
+    }
+
+    private boolean hasClinvarPathogenic(Phenopacket originalPhenopacket,
+                                         Set<Variant> variantSet) {
+        List<org.phenopackets.schema.v1.core.Variant> variants =  originalPhenopacket.getVariantsList();
+        for (org.phenopackets.schema.v1.core.Variant v : variants) {
+            Variant var = Variant.fromPhenopacketVariant(v);
+            if (variantSet.contains(var)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private void outputByMoi() {
+        ClinvarParser parser = new ClinvarParser(this.clinVarPath);
+        Set<Variant> variantSet = parser.getVariantSet();
+        for (java.io.File file: this.phenopacketFiles) {
+            String phenopacketAbsolutePath = file.getAbsolutePath();
+            PhenopacketObfuscator pobfuscator = new PhenopacketObfuscator(phenopacketAbsolutePath, this.ontology);
+            Phenopacket originalPhenopacket = pobfuscator.getOriginal();
+            String path2;
+            if (pobfuscator.diseaseIsAutosomalRecessive()) {
+                String basename = getNoNotObfuscatedBasename(file.getName());
+                if (hasClinvarPathogenic(originalPhenopacket, variantSet)) {
+                    path2 = String.format("%s%s%s", MOI_RECESSIVE_CLINVAR, File.separator, basename);
+                } else {
+                    path2 = String.format("%s%s%s", MOI_RECESSIVE_NO_CLINVAR, File.separator, basename);
+                }
+            } else if (pobfuscator.diseaseIsAutosomalDominant()) {
+                String basename = getNoNotObfuscatedBasename(file.getName());
+                if (hasClinvarPathogenic(originalPhenopacket, variantSet)) {
+                    path2 = String.format("%s%s%s", MOI_DOMINANT_CLINVAR, File.separator, basename);
+                } else {
+                    path2 = String.format("%s%s%s", MOI_DOMINANT_NO_CLINVAR, File.separator, basename);
+                }
+            } else {
+                System.out.println("[INFO] Skipping phenopacket " + file.getName());
+                continue;
+            }
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(path2));
+                bw.write(toJson(originalPhenopacket));
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

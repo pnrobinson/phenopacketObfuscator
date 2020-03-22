@@ -1,6 +1,7 @@
 package org.monarchinitiative.phenobfuscator.phenopacket;
 
 import com.google.common.collect.ImmutableList;
+import org.monarchinitiative.phenol.base.PhenolRuntimeException;
 import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -107,6 +108,17 @@ public class PhenopacketObfuscator {
                 addAllVariants(this.variants).
                 build();
     }
+
+    public Phenopacket getOriginal() {
+        return Phenopacket.newBuilder().
+                setSubject(subject).
+                addDiseases(simulatedDiagnosis).
+                addAllPhenotypicFeatures(this.hpoIdList).
+                addGenes(gene).
+                addAllVariants(this.variants).
+                build();
+    }
+
 
 
     /**
@@ -247,6 +259,27 @@ public class PhenopacketObfuscator {
             }
         }
         return false;
+    }
+
+    public boolean diseaseIsAutosomalDominant() {
+        if (variants.size() < 1) {
+            throw  new PhenolRuntimeException("No variants found in phenopacket");
+        } else if (variants.size() > 1) {
+            return false; // recessive or something else
+        }
+        Variant var = variants.get(0);
+        if (! var.hasVcfAllele() ) {
+            throw new PhenolRuntimeException("Variants required to have VCF format for this program");
+        }
+        VcfAllele vcfAllele = var.getVcfAllele();
+        if (vcfAllele.getChr().contains("X")) {
+            System.out.println("[INFO] Skipping X chromosomal variant");
+            return false;
+        }
+        if (var.getZygosity().equals(HOMOZYGOUS)) {
+            return false; // recessive
+        }
+        return true;
     }
 
 

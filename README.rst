@@ -146,3 +146,22 @@ Additional Comparisons
 * NO_NOT
 
   - This is a special set of 10 differential diagnoses where having a NOT query makes a difference.
+
+
+Separate by mode of inheritance and ClinVar status
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This separate command creates four output directories that contain all autosomal cases separated as to whether
+they contain at least one ClinVar pathogenic variant.
+
+* MOI_RECESSIVE_CLINVAR
+* MOI_RECESSIVE_NO_CLINVAR
+* MOI_DOMINANT_CLINVAR
+* MOI_DOMINANT_NO_CLINVAR
+
+To run this command, enter ::
+
+
+
+    java -jar phenobfuscator.jar -p /home/user/wherever/ppacket \\
+        --hpo /home/user/wherever/data/hp.obo \\
+        --sort-by-moi --clinvar /home/user/wherever/clinvar_20200316.vcf
